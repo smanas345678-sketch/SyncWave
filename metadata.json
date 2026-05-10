@@ -1,0 +1,6 @@
+{
+  "name": "SyncWave",
+  "description": "Low-latency movie synchronization platform for shared viewing experiences using WebRTC and Firebase.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["Real-time Sync", "WebRTC P2P", "PWA Support"]
+}

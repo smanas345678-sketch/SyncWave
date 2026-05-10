@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "Room": {
+      "title": "Room",
+      "description": "A synchronization room for shared video watching.",
+      "type": "object",
+      "properties": {
+        "hostId": { "type": "string", "description": "UID of the room creator/host" },
+        "hostName": { "type": "string", "description": "Display name of the host" },
+        "videoUrl": { "type": "string", "description": "URL of the video being played" },
+        "videoTitle": { "type": "string", "description": "Title of the video" },
+        "playing": { "type": "boolean", "description": "Current playback status" },
+        "currentTime": { "type": "number", "description": "Current playback time in seconds" },
+        "playbackRate": { "type": "number", "description": "Current playback speed" },
+        "lastUpdatedBy": { "type": "string", "description": "UID of the user who last updated the state" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp of the last state update" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation time of the room" }
+      },
+      "required": ["hostId", "playing", "currentTime", "updatedAt"]
+    },
+    "Participant": {
+      "title": "Participant",
+      "description": "A user participating in a room.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "joinedAt": { "type": "string", "format": "date-time" },
+        "lastSeen": { "type": "string", "format": "date-time" },
+        "status": { "type": "string", "enum": ["online", "offline"] }
+      },
+      "required": ["uid", "displayName", "joinedAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "A message sent in the room chat.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "text": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "system", "reaction"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "userName", "text", "timestamp"]
+    }
+  },
+  "firestore": {
+    "rooms/{roomId}": {
+      "schema": "Room",
+      "description": "Core room state"
+    },
+    "rooms/{roomId}/participants/{participantId}": {
+      "schema": "Participant",
+      "description": "Users currently in the room"
+    },
+    "rooms/{roomId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Room chat history"
+    }
+  }
+}

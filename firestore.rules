@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isRoomHost(roomId) {
+      return get(/databases/$(database)/documents/rooms/$(roomId)).data.hostId == request.auth.uid;
+    }
+
+    // Room Rules
+    match /rooms/{roomId} {
+      allow get: if isSignedIn() && isValidId(roomId);
+      allow list: if false; // No public room listing for privacy
+
+      function isValidRoom(data) {
+        return data.hostId == request.auth.uid 
+          && data.playing is bool 
+          && data.currentTime is number
+          && data.updatedAt == request.time;
+      }
+
+      allow create: if isSignedIn() && isValidId(roomId) && isValidRoom(request.resource.data);
+      
+      allow update: if isSignedIn() && (
+        // Host can update anything
+        isRoomHost(roomId) || 
+        // Participants can only update state if specifically allowed (though usually host is master)
+        // Here we allow lightweight state updates if they are the "lastUpdatedBy" (for sync reports)
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['playing', 'currentTime', 'playbackRate', 'lastUpdatedBy', 'updatedAt']))
+      );
+
+      // Participants Subcollection
+      match /participants/{participantId} {
+        allow read: if isSignedIn();
+        allow write: if isSignedIn() && request.auth.uid == participantId;
+      }
+
+      // Messages Subcollection
+      match /messages/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      }
+    }
+  }
+}
